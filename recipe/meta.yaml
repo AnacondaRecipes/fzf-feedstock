@@ -2,28 +2,33 @@
 {% set version = "0.55.0" %}
 
 {% set name = goname.split('/')[-1] %}
-{% set pkg_src = ('src/'+goname).replace("/",os.sep) %}
+{% set pkg_src = ('src/'+goname).replace("/",os.sep) %}  # src/github.com/junegunn/fzf
 
 package:
   name: {{ name|lower }}
   version: {{ version|replace("-", "_") }}
 
 source:
-  - folder: {{ pkg_src }}
-    url: https://{{ goname }}/archive/v{{ version }}.tar.gz
-    sha256: 805383f71bca7f8fb271ecd716852aea88fd898d5027d58add9e43df6ea766da
+  folder: {{ pkg_src }}
+  url: https://{{ goname }}/archive/v{{ version }}.tar.gz
+  sha256: 805383f71bca7f8fb271ecd716852aea88fd898d5027d58add9e43df6ea766da
 
 build:
   number: 0
+  skip: true  # [s390x]
   script:
     - pushd {{ pkg_src }}
-    - go build -ldflags "-X main.revision=conda-forge" -v -o $PREFIX/bin/fzf  # [not win]
-    - go build -ldflags "-X main.revision=conda-forge" -v -o %LIBRARY_BIN%\fzf.exe  # [win]
-    - bash -c "mkdir -p ${PREFIX}/share/fzf/shell; cp -v shell/* ${PREFIX}/share/fzf/shell/"
-    - bash -c "mkdir -p ${PREFIX}/share/fzf/plugin; cp -v plugin/* ${PREFIX}/share/fzf/plugin/"
-    - go-licenses save . --save_path ../../../../library_licenses
+    - go build -ldflags "-X main.revision=anaconda" -v -o %LIBRARY_BIN%\fzf.exe                      # [win]
+    - mkdir %PREFIX%\share\fzf                                                                       # [win]
+    - xcopy /s /y shell %PREFIX%\share\fzf\shell\                                                    # [win]
+    - xcopy /s /y plugin %PREFIX%\share\fzf\plugin\                                                  # [win]
+    - go-licenses.exe save . --save_path %SRC_DIR%\\library_licenses                                 # [win]
+    - go build -ldflags "-X main.revision=anaconda" -v -o $PREFIX/bin/fzf                            # [not win]
+    - mkdir -p ${PREFIX}/share/fzf/shell; cp -v shell/* ${PREFIX}/share/fzf/shell/                   # [not win]
+    - mkdir -p ${PREFIX}/share/fzf/plugin; cp -v plugin/* ${PREFIX}/share/fzf/plugin/                # [not win]
+    - go-licenses save . --save_path ${SRC_DIR}/library_licenses                                     # [not win]
     # Clear out cache to avoid file not removable warnings
-    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH)  # [unix]
+    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH)                                        # [not win]
 
 requirements:
   build:
@@ -33,6 +38,18 @@ requirements:
 test:
   commands:
     - fzf --version
+    - if not exist %PREFIX%\\share\\fzf\\shell\\completion.bash exit 1    # [win]
+    - if not exist %PREFIX%\\share\\fzf\\shell\\completion.zsh exit 1     # [win]
+    - if not exist %PREFIX%\\share\\fzf\\shell\\key-bindings.bash exit 1  # [win]
+    - if not exist %PREFIX%\\share\\fzf\\shell\\key-bindings.fish exit 1  # [win]
+    - if not exist %PREFIX%\\share\\fzf\\shell\\key-bindings.zsh exit 1   # [win]
+    - if not exist %PREFIX%\\share\\fzf\\plugin\\fzf.vim exit 1           # [win]
+    - test -f ${PREFIX}/share/fzf/shell/completion.bash                   # [not win]
+    - test -f ${PREFIX}/share/fzf/shell/completion.zsh                    # [not win]
+    - test -f ${PREFIX}/share/fzf/shell/key-bindings.bash                 # [not win]
+    - test -f ${PREFIX}/share/fzf/shell/key-bindings.fish                 # [not win]
+    - test -f ${PREFIX}/share/fzf/shell/key-bindings.zsh                  # [not win]
+    - test -f ${PREFIX}/share/fzf/plugin/fzf.vim                          # [not win]
 
 about:
   home: https://{{ goname }}
@@ -42,6 +59,12 @@ about:
     - {{ pkg_src }}/LICENSE
     - library_licenses/
   summary: A command-line fuzzy finder
+  description: |
+    An interactive filter program for any kind of list; files, command history, processes, hostnames, bookmarks,
+    git commits, etc. It implements a "fuzzy" matching algorithm, so you can quickly type in patterns with omitted
+    characters and still get the results you want.
+  doc_url: https://{{ goname }}/blob/master/README.md
+  dev_url: https://{{ goname }}
 
 extra:
   recipe-maintainers:
