@@ -37,7 +37,7 @@ build:
     - cp LICENSE ${SRC_DIR}/library_licenses/ 2>/dev/null || true     # [not win]
     
     # Clear out cache to avoid file not removable warnings
-    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH) 
+    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH) # [not win]
 
 requirements:
   build:
