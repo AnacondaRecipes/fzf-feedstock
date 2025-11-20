@@ -15,7 +15,6 @@ source:
 
 build:
   number: 0
-  skip: true  # [s390x]
   script:
     - pushd {{ pkg_src }}
     - go build -ldflags "-X main.revision=anaconda" -v -o %LIBRARY_BIN%\fzf.exe                      # [win]
