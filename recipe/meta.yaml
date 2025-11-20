@@ -28,16 +28,16 @@ build:
     
     # Due to license handling issues with Go 1.23, we'll only attempt to handle license
     # and skip if it fails (https://github.com/google/go-licenses/issues/128).
-    - go-licenses.exe save . --save_path %SRC_DIR%\\library_licenses 2>nul || echo "go-licenses failed, continuing..."     # [win]
-    - if not exist %SRC_DIR%\\library_licenses mkdir %SRC_DIR%\\library_licenses     # [win]
-    - if not exist %SRC_DIR%\\library_licenses\\LICENSE copy LICENSE %SRC_DIR%\\library_licenses\\     # [win]
+    - go-licenses.exe save . --save_path %SRC_DIR%\\library_licenses 2>nul || echo "go-licenses failed, continuing..."    # [win]
+    - if not exist %SRC_DIR%\\library_licenses mkdir %SRC_DIR%\\library_licenses                                          # [win]
+    - if not exist %SRC_DIR%\\library_licenses\\LICENSE copy LICENSE %SRC_DIR%\\library_licenses\\                        # [win]
 
-    - go-licenses save . --save_path ${SRC_DIR}/library_licenses 2>/dev/null || echo "go-licenses failed, continuing..."     # [not win]
-    - mkdir -p ${SRC_DIR}/library_licenses     # [not win]
-    - cp LICENSE ${SRC_DIR}/library_licenses/ 2>/dev/null || true     # [not win]
-    
+    - go-licenses save . --save_path ${SRC_DIR}/library_licenses 2>/dev/null || echo "go-licenses failed, continuing..."  # [not win]
+    - mkdir -p ${SRC_DIR}/library_licenses                                                                                # [not win]
+    - cp LICENSE ${SRC_DIR}/library_licenses/ 2>/dev/null || true                                                         # [not win]
+
     # Clear out cache to avoid file not removable warnings
-    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH) # [not win]
+    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH)                                                             # [not win]
 
 requirements:
   build:
