@@ -76,3 +76,5 @@ about:
 extra:
   recipe-maintainers:
     - dbast
+  lint-skips:
+    - should_use_stdlib
