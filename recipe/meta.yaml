@@ -1,5 +1,5 @@
 {% set goname = "github.com/junegunn/fzf" %}
-{% set version = "0.55.0" %}
+{% set version = "0.67.0" %}
 
 {% set name = goname.split('/')[-1] %}
 {% set pkg_src = ('src/'+goname).replace("/",os.sep) %}  # src/github.com/junegunn/fzf
@@ -11,24 +11,33 @@ package:
 source:
   folder: {{ pkg_src }}
   url: https://{{ goname }}/archive/v{{ version }}.tar.gz
-  sha256: 805383f71bca7f8fb271ecd716852aea88fd898d5027d58add9e43df6ea766da
+  sha256: da72936dd23045346769dbf233a7a1fa6b4cfe4f0e856b279821598ce8f692af
 
 build:
   number: 0
-  skip: true  # [s390x]
   script:
     - pushd {{ pkg_src }}
+    # Build the binary
     - go build -ldflags "-X main.revision=anaconda" -v -o %LIBRARY_BIN%\fzf.exe                      # [win]
     - mkdir %PREFIX%\share\fzf                                                                       # [win]
     - xcopy /s /y shell %PREFIX%\share\fzf\shell\                                                    # [win]
     - xcopy /s /y plugin %PREFIX%\share\fzf\plugin\                                                  # [win]
-    - go-licenses.exe save . --save_path %SRC_DIR%\\library_licenses                                 # [win]
     - go build -ldflags "-X main.revision=anaconda" -v -o $PREFIX/bin/fzf                            # [not win]
     - mkdir -p ${PREFIX}/share/fzf/shell; cp -v shell/* ${PREFIX}/share/fzf/shell/                   # [not win]
     - mkdir -p ${PREFIX}/share/fzf/plugin; cp -v plugin/* ${PREFIX}/share/fzf/plugin/                # [not win]
-    - go-licenses save . --save_path ${SRC_DIR}/library_licenses                                     # [not win]
+    
+    # Due to license handling issues with Go 1.23, we'll only attempt to handle license
+    # and skip if it fails (https://github.com/google/go-licenses/issues/128).
+    - go-licenses.exe save . --save_path %SRC_DIR%\\library_licenses 2>nul || echo "go-licenses failed, continuing..."    # [win]
+    - if not exist %SRC_DIR%\\library_licenses mkdir %SRC_DIR%\\library_licenses                                          # [win]
+    - if not exist %SRC_DIR%\\library_licenses\\LICENSE copy LICENSE %SRC_DIR%\\library_licenses\\                        # [win]
+
+    - go-licenses save . --save_path ${SRC_DIR}/library_licenses 2>/dev/null || echo "go-licenses failed, continuing..."  # [not win]
+    - mkdir -p ${SRC_DIR}/library_licenses                                                                                # [not win]
+    - cp LICENSE ${SRC_DIR}/library_licenses/ 2>/dev/null || true                                                         # [not win]
+
     # Clear out cache to avoid file not removable warnings
-    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH)                                        # [not win]
+    - chmod -R u+w $(go env GOPATH) && rm -r $(go env GOPATH)                                                             # [not win]
 
 requirements:
   build:
@@ -52,19 +61,17 @@ test:
     - test -f ${PREFIX}/share/fzf/plugin/fzf.vim                          # [not win]
 
 about:
-  home: https://{{ goname }}
+  home: https://junegunn.github.io/fzf
   license: MIT
   license_family: MIT
-  license_file:
-    - {{ pkg_src }}/LICENSE
-    - library_licenses/
+  license_file: {{ pkg_src }}/LICENSE
   summary: A command-line fuzzy finder
   description: |
     An interactive filter program for any kind of list; files, command history, processes, hostnames, bookmarks,
     git commits, etc. It implements a "fuzzy" matching algorithm, so you can quickly type in patterns with omitted
     characters and still get the results you want.
-  doc_url: https://{{ goname }}/blob/master/README.md
-  dev_url: https://{{ goname }}
+  doc_url: https://junegunn.github.io/fzf/getting-started
+  dev_url: https://github.com/junegunn/fzf
 
 extra:
   recipe-maintainers:
